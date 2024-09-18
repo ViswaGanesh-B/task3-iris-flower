@@ -1,0 +1,67 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, classification_report
+
+def load_data(file_path):
+    """Load the dataset from a CSV file."""
+    return pd.read_csv("/content/IRIS.csv")
+
+def prepare_data(df):
+    """Prepare features and target variable."""
+    X = df.iloc[:, :-1]  # Features (all columns except the last one)
+    y = df.iloc[:, -1]   # Target variable (last column)
+    
+    # Encode the target variable if it's categorical
+    le = LabelEncoder()
+    y_encoded = le.fit_transform(y)
+    
+    return X, y_encoded, le
+
+def train_model(X_train, y_train):
+    """Initialize and train the Decision Tree Classifier."""
+    model = DecisionTreeClassifier()
+    model.fit(X_train, y_train)
+    return model
+
+def evaluate_model(model, X_test, y_test, le):
+    """Make predictions and evaluate the model."""
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f'\nAccuracy: {accuracy:.2f}')
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred, target_names=le.classes_))
+    return y_test, y_pred
+
+def save_results(y_test, y_pred, le, file_path):
+    """Save actual vs. predicted results to a CSV file."""
+    results = pd.DataFrame({
+        'Actual': le.inverse_transform(y_test),
+        'Predicted': le.inverse_transform(y_pred)
+    })
+    results.to_csv(file_path, index=False)
+    print(f"\nPredictions saved to '{file_path}'")
+
+def main():
+    # Load and prepare data
+    df = load_data('IRIS.csv')  # Dataset filename
+    print("First few rows of the dataset:")
+    print(df.head())
+    
+    X, y, le = prepare_data(df)
+    
+    # Split data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    
+    # Train the model
+    model = train_model(X_train, y_train)
+    
+    # Evaluate the model
+    y_test, y_pred = evaluate_model(model, X_test, y_test, le)
+    
+    # Save the results
+    save_results(y_test, y_pred, le, 'iris_predictions.csv')  # Output filename
+
+if _name_ == "_main_":
+    main()
